@@ -1,0 +1,25 @@
+<ng-container *ngLet="gameOver$ | async as gameOver">
+  <div class="matrix">
+    <div *ngFor="let line of matrix" class="line">
+      <button
+        mat-stroked-button
+        class="cell"
+        *ngFor="let key of line"
+        (click)="!ticTacToeCells[key] && playerMove(key)"
+        [disabled]="gameOver"
+      >
+        <span>{{ ticTacToeCells[key] }}</span>
+      </button>
+    </div>
+  </div>
+  <div *ngIf="gameOver" class="game-over">
+    <span
+      *ngLet="gameOverInfos[gameOver - 1] as info"
+      [style.color]="info?.color"
+      >{{ info?.sentence }}</span
+    >
+    <button mat-raised-button color="primary" (click)="reset()">
+      Play again
+    </button>
+  </div>
+</ng-container>

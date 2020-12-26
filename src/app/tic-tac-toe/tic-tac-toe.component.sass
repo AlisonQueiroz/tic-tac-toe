@@ -1,0 +1,33 @@
+.cell
+  text-align: center
+  border-color: black
+  border-width: 1px
+  border-style: solid
+  flex: 1
+  font-size: 20vh
+  -webkit-user-select: none
+  -khtml-user-select: none
+  -moz-user-select: none
+  -ms-user-select: none
+  cursor: pointer
+
+.matrix
+  height: calc(100% - 130px)
+  display: flex
+  flex-direction: column
+
+.line
+  display: flex
+  flex: 1
+
+.game-over
+  display: flex
+  flex-direction: column
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translate(-50%, 50%)
+  >span
+    font-size: 20px
+    font-weight: bold
+    text-align: center
