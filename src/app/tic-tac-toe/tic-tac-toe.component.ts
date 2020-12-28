@@ -20,7 +20,7 @@ export class TicTacToeComponent {
       color: 'green'
     },
     {
-      sentence: 'You loose...',
+      sentence: 'You lose...',
       color: 'red'
     },
     {
