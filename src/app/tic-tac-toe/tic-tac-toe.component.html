@@ -5,6 +5,7 @@
         mat-stroked-button
         class="cell"
         *ngFor="let key of line"
+        [ngClass]="{'blink': gameOver && isPartOfWinningCombination(key)}"
         (click)="!ticTacToeCells[key] && playerMove(key)"
         [disabled]="gameOver"
       >
