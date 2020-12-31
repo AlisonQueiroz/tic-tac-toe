@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import * as _ from 'lodash';
 import { Subject } from 'rxjs';
 import { Edges, GameStatus, TicTacToeCell } from './tic-tac-toe.model';
 
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-tic-tac-toe',
@@ -11,7 +11,7 @@ import { Edges, GameStatus, TicTacToeCell } from './tic-tac-toe.model';
 })
 export class TicTacToeComponent {
 
-  readonly n = 3;
+  readonly n = 4;
   readonly size = this.n ** 2 + 1;
   readonly gameStatus = GameStatus;
   readonly gameOverInfos = [
