@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { identity, random, mapValues, keyBy, range, map, difference, chunk, zip, head, intersection, uniq, flatMap } from 'lodash';
+import * as _ from 'lodash';
 import { Subject } from 'rxjs';
-import { GameStatus, TicTacToeCell } from './tic-tac-toe.model';
+import { Edges, GameStatus, TicTacToeCell } from './tic-tac-toe.model';
 
 
 @Component({
@@ -29,20 +29,28 @@ export class TicTacToeComponent {
     }
   ];
 
-  readonly indexes = range(1, this.size);
-  readonly matrix  = chunk(this.indexes, this.n);
+  readonly indexes = _.range(1, this.size);
+  readonly matrix  = _.chunk(this.indexes, this.n);
+  readonly transposedMatrix = _.zip(...this.matrix);
 
-  readonly ticTacToeCells: TicTacToeCell = mapValues(keyBy(this.indexes), () => null);
+  readonly ticTacToeCells: TicTacToeCell = _.mapValues(_.keyBy(this.indexes), () => null);
 
   readonly winningCombinations = [
     // Each line
     ...this.matrix,
     // Each column (transpose of lines)
-    ...zip(...this.matrix),
+    ...this.transposedMatrix,
     // Diagonals
-    range(this.n).map((_, i) => 1 + i * (this.n + 1)),
-    range(this.n).map((_, i) => this.n * (1 + i) - i)
+    _.range(this.n).map((v, i) => 1 + i * (this.n + 1)),
+    _.range(this.n).map((v, i) => this.n * (1 + i) - i)
   ];
+
+  readonly edges: Edges = {
+    top: _.head(this.matrix),
+    left: _.head(this.transposedMatrix),
+    right: _.last(this.transposedMatrix),
+    bottom: _.last(this.matrix),
+  };
 
   readonly gameOver$ = new Subject<GameStatus>();
   public winComb: number[];
@@ -59,6 +67,10 @@ export class TicTacToeComponent {
     return this.winComb.some(x => x === element);
   }
 
+  isOfSide(side: keyof(Edges), element: number) {
+    return this.edges[side].some(x => x === element);
+  }
+
   private checkWinner() {
     const x = this.moves('x');
     const moves = x.length;
@@ -72,28 +84,27 @@ export class TicTacToeComponent {
         this.winComb = this.getWinningCombination(this.moves('o'));
       } else if (moves === Math.floor(this.size / 2)) {
         this.gameOver$.next(GameStatus.Draw);
-        this.winComb = flatMap(this.matrix);
+        this.winComb = _.flatMap(this.matrix);
       }
     }
   }
 
   private moves(player: 'x' | 'o') {
-    return map(this.ticTacToeCells, (x, i) => x === player ? Number(i) : null).filter(x => x !== null);
+    return _.map(this.ticTacToeCells, (x, i) => x === player ? Number(i) : null).filter(x => x !== null);
   }
 
   private checkWinningCombination(moves: number[]) {
-    return this.winningCombinations.some(x => !difference(x, moves).length);
+    return this.winningCombinations.some(x => !_.difference(x, moves).length);
   }
 
   private getWinningCombination(moves: number[]) {
-    const comb = this.winningCombinations.find(x => !difference(x, moves).length);
-    return comb;
+    return this.winningCombinations.find(x => !_.difference(x, moves).length);
   }
 
   // This is a logic to make PC not so dumb when playing.
   private pcMove() {
-    const cellsLeft = map(this.ticTacToeCells, (x, i) => !x && i)
-      .filter(identity)
+    const cellsLeft = _.map(this.ticTacToeCells, (x, i) => !x && i)
+      .filter(_.identity)
       .map(x => Number(x));
 
     const left = cellsLeft.length;
@@ -109,26 +120,26 @@ export class TicTacToeComponent {
         if (o.length) {
           const x = this.moves('x');
 
-          const differencesX = this.winningCombinations.map(c => difference(c, x));
+          const differencesX = this.winningCombinations.map(c => _.difference(c, x));
           const minX = [...differencesX].sort((a, b) => a.length - b.length);
-          const hinderPlayer = uniq(flatMap(minX.map(y => intersection(y, cellsLeft))));
+          const hinderPlayer = _.uniq(_.flatMap(minX.map(y => _.intersection(y, cellsLeft))));
 
-          const differencesO = this.winningCombinations.map(c => difference(c, o));
+          const differencesO = this.winningCombinations.map(c => _.difference(c, o));
           const minO = [...differencesO].sort((a, b) => a.length - b.length);
-          const seekVictory = uniq(flatMap(minO.map(y => intersection(y, cellsLeft))));
+          const seekVictory = _.uniq(_.flatMap(minO.map(y => _.intersection(y, cellsLeft))));
 
-          const common = intersection(hinderPlayer, seekVictory);
+          const common = _.intersection(hinderPlayer, seekVictory);
           const winningMove = common.find(y => this.checkWinningCombination([...o, y]));
 
           const nextMove = winningMove ||
-            head(common) ||
-            head(hinderPlayer) ||
-            head(seekVictory)  ||
-            cellsLeft[random(left - 1)];
+            _.head(common) ||
+            _.head(hinderPlayer) ||
+            _.head(seekVictory)  ||
+            cellsLeft[_.random(left - 1)];
 
           this.ticTacToeCells[nextMove] = 'o';
         } else {
-          this.ticTacToeCells[cellsLeft[random(left - 1)]] = 'o';
+          this.ticTacToeCells[cellsLeft[_.random(left - 1)]] = 'o';
         }
       }
     }
@@ -138,7 +149,7 @@ export class TicTacToeComponent {
   reset() {
     this.winComb = null;
     this.gameOver$.next(null);
-    Object.assign(this.ticTacToeCells, mapValues(keyBy(this.indexes), () => null));
+    Object.assign(this.ticTacToeCells, _.mapValues(_.keyBy(this.indexes), () => null));
   }
 
 }

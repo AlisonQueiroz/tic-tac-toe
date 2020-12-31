@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "expandabletictactoe"
+  },
+  "targets": {
+    "expandabletictactoe": {
+      "hosting": {
+        "tic-tac-toe": [
+          "expandabletictactoe"
+        ]
+      }
+    }
   }
 }

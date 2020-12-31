@@ -7,3 +7,10 @@ export enum GameStatus {
   PlayerLost,
   Draw
 }
+
+export interface Edges {
+  top: number[];
+  left: number[];
+  right: number[];
+  bottom: number[];
+}

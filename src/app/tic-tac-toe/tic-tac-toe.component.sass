@@ -1,19 +1,28 @@
 .cell
-  text-align: center
   border-color: black
   border-width: 1px
   border-style: solid
   flex: 1
-  font-size: 20vh
+  font-size: 13vh
   -webkit-user-select: none
   -khtml-user-select: none
   -moz-user-select: none
   -ms-user-select: none
   cursor: pointer
 
+  &.top
+    border-top: hidden
+  &.left
+    border-left: hidden
+  &.right
+    border-right: hidden
+  &.bottom
+    border-bottom: hidden
+
 .matrix
-  height: calc(100% - 130px)
+  height: calc(100% - 11rem)
   display: flex
+  margin: 0px 10vh
   flex-direction: column
 
 .line
@@ -31,6 +40,9 @@
     font-size: 20px
     font-weight: bold
     text-align: center
+
+.mat-stroked-button
+  border-radius: 0 !important
 
 .blink
   animation: blinker 0.5s linear infinite
