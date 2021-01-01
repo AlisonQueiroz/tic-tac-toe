@@ -1,155 +1,127 @@
-import { Component } from '@angular/core';
-import { Subject } from 'rxjs';
-import { Edges, GameStatus, TicTacToeCell } from './tic-tac-toe.model';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { merge, Observable } from 'rxjs';
+import { map, filter, skipWhile, tap, takeUntil, startWith } from 'rxjs/operators';
+import { gameOverInfos, GameStatus, Matrix } from './tic-tac-toe.model';
 
 import * as _ from 'lodash';
 
 @Component({
   selector: 'app-tic-tac-toe',
   templateUrl: './tic-tac-toe.component.html',
-  styleUrls: ['./tic-tac-toe.component.sass']
+  styleUrls: ['./tic-tac-toe.component.sass'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TicTacToeComponent {
+export class TicTacToeComponent implements OnInit {
+  /** Matrix order */
+  private readonly n = 3;
+  private readonly gameStatus = GameStatus;
+  readonly gameOverInfos = gameOverInfos;
 
-  readonly n = 4;
-  readonly size = this.n ** 2 + 1;
-  readonly gameStatus = GameStatus;
-  readonly gameOverInfos = [
-    {
-      sentence: 'You win!',
-      color: 'green'
-    },
-    {
-      sentence: 'You lose...',
-      color: 'red'
-    },
-    {
-      sentence: 'Draw!',
-      color: 'orange'
-    }
-  ];
+  readonly matrix = new Matrix(this.n);
 
-  readonly indexes = _.range(1, this.size);
-  readonly matrix  = _.chunk(this.indexes, this.n);
-  readonly transposedMatrix = _.zip(...this.matrix);
+  readonly reset$ = this.matrix.reset$.pipe(
+    startWith(),
+    tap(() => this.pcPlayer.subscribe())
+  ) as Observable<void>;
 
-  readonly ticTacToeCells: TicTacToeCell = _.mapValues(_.keyBy(this.indexes), () => null);
+  // Everytime a player moves, it should check (after this.n movements) if there's a winner
+  readonly gameOver$ = merge(
+    this.reset$,
+    this.matrix.movement$.pipe(
+      skipWhile(
+        () =>
+          this.matrix.movements.x.length < this.n &&
+          this.matrix.movements.o.length < this.n
+      ),
+      map(m => {
+        const status = this.gameStatus;
+        if (this.matrix.checkWinningCombination(m.player)) {
 
-  readonly winningCombinations = [
-    // Each line
-    ...this.matrix,
-    // Each column (transpose of lines)
-    ...this.transposedMatrix,
-    // Diagonals
-    _.range(this.n).map((v, i) => 1 + i * (this.n + 1)),
-    _.range(this.n).map((v, i) => this.n * (1 + i) - i)
-  ];
+          const winComb = this.matrix.getWinningCombination(m.player);
+          this.matrix.flattenedValues.forEach(x =>
+            winComb.some(y => y === x.id) ? (x.style += ' blink') : null
+          );
 
-  readonly edges: Edges = {
-    top: _.head(this.matrix),
-    left: _.head(this.transposedMatrix),
-    right: _.last(this.transposedMatrix),
-    bottom: _.last(this.matrix),
-  };
+          return m.player === 'x' ? status.PlayerWon : status.PlayerLost;
+        } else {
+          const movementsX = this.matrix.movements.x.length;
+          const movementsO = this.matrix.movements.o.length;
+          const movementLimit = Math.floor(this.matrix.size / 2);
 
-  readonly gameOver$ = new Subject<GameStatus>();
-  public winComb: number[];
+          if (movementsX >= movementLimit || movementsO >= movementLimit) {
+            this.matrix.flattenedValues.forEach(x => x.style += ' blink');
+            return status.Draw;
+          }
+        }
+      }),
+      filter(x => !!x)
+    )
+  );
 
-  playerMove(key: number) {
-    this.ticTacToeCells[key] = 'x';
-    this.checkWinner();
-
-    this.pcMove();
-  }
-
-  isPartOfWinningCombination(element: number) {
-    if (!this.winComb) { return; }
-    return this.winComb.some(x => x === element);
-  }
-
-  isOfSide(side: keyof(Edges), element: number) {
-    return this.edges[side].some(x => x === element);
-  }
-
-  private checkWinner() {
-    const x = this.moves('x');
-    const moves = x.length;
-
-    if (moves >= this.n) {
-      if (this.checkWinningCombination(x)) {
-        this.gameOver$.next(GameStatus.PlayerWon);
-        this.winComb = this.getWinningCombination(x);
-      } else if (this.checkWinningCombination(this.moves('o'))) {
-        this.gameOver$.next(GameStatus.PlayerLost);
-        this.winComb = this.getWinningCombination(this.moves('o'));
-      } else if (moves === Math.floor(this.size / 2)) {
-        this.gameOver$.next(GameStatus.Draw);
-        this.winComb = _.flatMap(this.matrix);
-      }
-    }
-  }
-
-  private moves(player: 'x' | 'o') {
-    return _.map(this.ticTacToeCells, (x, i) => x === player ? Number(i) : null).filter(x => x !== null);
-  }
-
-  private checkWinningCombination(moves: number[]) {
-    return this.winningCombinations.some(x => !_.difference(x, moves).length);
-  }
-
-  private getWinningCombination(moves: number[]) {
-    return this.winningCombinations.find(x => !_.difference(x, moves).length);
-  }
+  readonly pcPlayer = this.matrix.movement$.pipe(
+    filter(p => p.player === 'x'),
+    takeUntil(this.gameOver$),
+    tap(() => this.pcMove())
+  );
 
   // This is a logic to make PC not so dumb when playing.
   private pcMove() {
-    const cellsLeft = _.map(this.ticTacToeCells, (x, i) => !x && i)
-      .filter(_.identity)
-      .map(x => Number(x));
+    const cellsLeft = this.matrix.flattenedValues
+      .map(x => x.value ? null : x.id)
+      .filter(_.identity);
 
-    const left = cellsLeft.length;
+    const amountLeft = cellsLeft.length;
 
-    if (left) {
-      const center = this.ticTacToeCells[this.size / 2];
+    let nextMove: number;
 
-      if (this.n % 2 && !center) {
-        this.ticTacToeCells[this.size / 2] = 'o';
+    if (amountLeft) {
+      // If n is odd and matrix has not a value on the central element
+      const centerIndex = this.n % 2 && Math.floor((this.n - 1) / 2);
+      const centerValue = this.matrix.values[centerIndex][centerIndex].value;
+
+      if (!centerValue) {
+        nextMove = this.matrix.values[centerIndex][centerIndex].id;
       } else {
-        const o = this.moves('o');
+        const o = this.matrix.movements.o;
 
         if (o.length) {
-          const x = this.moves('x');
+          const x = this.matrix.movements.x;
 
-          const differencesX = this.winningCombinations.map(c => _.difference(c, x));
+          const differencesX = this.matrix.winningCombinations.map(c =>
+            _.difference(c, x)
+          );
           const minX = [...differencesX].sort((a, b) => a.length - b.length);
-          const hinderPlayer = _.uniq(_.flatMap(minX.map(y => _.intersection(y, cellsLeft))));
+          const hinderPlayer = _.uniq(
+            _.flatMap(minX.map(y => _.intersection(y, cellsLeft)))
+          );
 
-          const differencesO = this.winningCombinations.map(c => _.difference(c, o));
+          const differencesO = this.matrix.winningCombinations.map((c) =>
+            _.difference(c, o)
+          );
           const minO = [...differencesO].sort((a, b) => a.length - b.length);
-          const seekVictory = _.uniq(_.flatMap(minO.map(y => _.intersection(y, cellsLeft))));
+          const seekVictory = _.uniq(
+            _.flatMap(minO.map(y => _.intersection(y, cellsLeft)))
+          );
 
           const common = _.intersection(hinderPlayer, seekVictory);
-          const winningMove = common.find(y => this.checkWinningCombination([...o, y]));
+          const winningMove = common.find(y =>
+            this.matrix.checkWinningCombination('o', y)
+          );
 
-          const nextMove = winningMove ||
+          nextMove =
+            winningMove ||
             _.head(common) ||
             _.head(hinderPlayer) ||
-            _.head(seekVictory)  ||
-            cellsLeft[_.random(left - 1)];
-
-          this.ticTacToeCells[nextMove] = 'o';
+            _.head(seekVictory);
         } else {
-          this.ticTacToeCells[cellsLeft[_.random(left - 1)]] = 'o';
+          nextMove = cellsLeft[_.random(amountLeft - 1)];
         }
       }
+      this.matrix.movementTrigger$.next({ id: nextMove, player: 'o' });
     }
-    this.checkWinner();
   }
 
-  reset() {
-    this.winComb = null;
-    this.gameOver$.next(null);
-    Object.assign(this.ticTacToeCells, _.mapValues(_.keyBy(this.indexes), () => null));
+  ngOnInit() {
+    this.pcPlayer.subscribe();
   }
-
 }

@@ -1,21 +1,18 @@
 <ng-container *ngLet="gameOver$ | async as gameOver">
   <div class="matrix">
-    <div *ngFor="let line of matrix" class="line">
+    <div *ngFor="let line of matrix?.values" class="line">
       <button
         mat-stroked-button
         class="cell"
-        *ngFor="let key of line"
-        [ngClass]="{
-          'blink': gameOver && isPartOfWinningCombination(key),
-          'top': isOfSide('top', key),
-          'left': isOfSide('left', key),
-          'right': isOfSide('right', key),
-          'bottom': isOfSide('bottom', key)
-        }"
-        (click)="!ticTacToeCells[key] && playerMove(key)"
+        *ngFor="let cell of line"
+        [ngClass]="cell.style"
+        (click)="
+          !cell?.value &&
+            matrix.movementTrigger$.next({ id: cell.id, player: 'x' })
+        "
         [disabled]="gameOver"
       >
-        <span>{{ ticTacToeCells[key] }}</span>
+        <span>{{ cell?.value }}</span>
       </button>
     </div>
   </div>
@@ -25,7 +22,7 @@
       [style.color]="info?.color"
       >{{ info?.sentence }}</span
     >
-    <button mat-raised-button color="primary" (click)="reset()">
+    <button mat-raised-button color="primary" (click)="matrix.resetTrigger$.next()">
       Play again
     </button>
   </div>
