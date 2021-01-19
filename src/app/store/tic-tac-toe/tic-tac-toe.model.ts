@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
-import { shareReplay, tap } from 'rxjs/operators';
+import { filter, shareReplay, tap } from 'rxjs/operators';
 
 export enum GameStatus {
   PlayerWon = 1,
@@ -102,12 +102,14 @@ export class Matrix {
     ];
 
     this.movement$ = this.movementTrigger$.pipe(
+      filter(x => !!x),
       tap(p => {
         this.movements[p.player].push(p.id);
         this.flattenedValues.find(x => x.id === p.id).value = p.player;
       }),
       shareReplay(1)
     );
+
   }
 
   checkWinningCombination(player: Player, extra?: number) {
@@ -117,6 +119,19 @@ export class Matrix {
 
   getWinningCombination(player?: Player) {
     return this.winningCombinations.find(x => !_.difference(x, this.movements[player]).length);
+  }
+
+  updateGameState(movements: PlayersMovements) {
+    _.forEach(movements, (m, k) =>
+      m.forEach(p =>
+        this.flattenedValues.forEach(v => {
+          if (v.id === p) {
+            v.value = k as Player;
+          }
+        })
+      )
+    );
+    this.movements = movements;
   }
 }
 

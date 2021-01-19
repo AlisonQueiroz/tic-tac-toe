@@ -1,0 +1,41 @@
+<div
+  style="
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    height: 40%;
+  "
+>
+  <p>Which one do you want to play?</p>
+
+  <div style="display: flex">
+    <mat-button-toggle-group
+      name="player"
+      aria-label="Player"
+      style="font-size: 5vh"
+      [formControl]="player"
+    >
+      <mat-button-toggle mat-stroked-button value="x"> x </mat-button-toggle>
+      <mat-button-toggle mat-stroked-button value="o"> o </mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+</div>
+
+<div
+  style="
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+  "
+>
+  <p>Do you want to play</p>
+  <button mat-stroked-button style="margin: 10px" (click)="play({ online: true })">
+    Online with a friend
+  </button>
+
+  <button mat-stroked-button (click)="play()">Offline</button>
+</div>

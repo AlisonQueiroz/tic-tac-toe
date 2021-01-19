@@ -8,11 +8,11 @@
         [ngClass]="cell.style"
         (click)="
           !cell?.value &&
-            matrix.movementTrigger$.next({ id: cell.id, player: 'x' })
+            matrix.movementTrigger$.next({ id: cell.id, player: player1 })
         "
-        [disabled]="gameOver"
+        [disabled]="gameOver || (opponentTurn$ | async)"
       >
-        <span>{{ cell?.value }}</span>
+        {{ cell?.value }}
       </button>
     </div>
   </div>
@@ -22,7 +22,11 @@
       [style.color]="info?.color"
       >{{ info?.sentence }}</span
     >
-    <button mat-raised-button color="primary" (click)="matrix.resetTrigger$.next()">
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="matrix.resetTrigger$.next()"
+    >
       Play again
     </button>
   </div>

@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  firebaseConfig: {
+  firebase: {
     apiKey: 'AIzaSyBoXsqKODYa0N_nUamfL1TZIu7jLKcTgNM',
     authDomain: 'expandabletictactoe.firebaseapp.com',
     databaseURL: 'https://expandabletictactoe-default-rtdb.firebaseio.com',
