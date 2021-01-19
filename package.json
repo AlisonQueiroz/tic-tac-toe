@@ -25,6 +25,7 @@
     "angularfire2": "^5.4.2",
     "firebase": "^8.2.1",
     "lodash": "^4.17.20",
+    "ngx-auth-firebaseui": "^5.0.1",
     "rxjs": "~6.5.4",
     "tslib": "^2.0.0",
     "zone.js": "~0.10.2"
