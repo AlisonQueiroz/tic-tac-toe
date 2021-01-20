@@ -24,10 +24,15 @@ import { MatListModule } from '@angular/material/list';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 
 const material = [
-  MatButtonModule,
-  MatButtonToggleModule,
+  MatIconModule,
+  MatListModule,
   MatInputModule,
-  MatProgressSpinnerModule
+  MatButtonModule,
+  MatButtonModule,
+  MatToolbarModule,
+  MatSidenavModule,
+  MatButtonToggleModule,
+  MatProgressSpinnerModule,
 ];
 
 @NgModule({
@@ -54,12 +59,7 @@ const material = [
           authGuardLoggedInURL: '',
         }
       ),
-    LayoutModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatSidenavModule,
-    MatIconModule,
-    MatListModule,
+    LayoutModule
   ],
   exports: [
     NgLetDirective,

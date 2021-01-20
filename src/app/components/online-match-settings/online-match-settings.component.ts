@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -9,6 +9,7 @@ import { GameState, TicTacToeService } from 'src/app/store/tic-tac-toe/tic-tac-t
   selector: 'app-online-match-settings',
   templateUrl: './online-match-settings.component.html',
   styleUrls: ['./online-match-settings.component.sass'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnlineMatchSettingsComponent {
   readonly loading$ = new Subject<boolean>();
