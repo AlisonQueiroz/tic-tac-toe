@@ -28,7 +28,9 @@ export class TicTacToeComponent implements OnInit {
     tap(() => this.pcPlayerMovements$.subscribe())
   ) as Observable<null>;
 
-  // Everytime a player moves, it should check (after this.n movements) if there's a winner
+  /**
+   * Everytime a player moves, it should check (after this.n movements) if there's a winner
+   */
   readonly gameOver$ = merge(
     this.reset$,
     this.matrix.movement$.pipe(
@@ -41,19 +43,16 @@ export class TicTacToeComponent implements OnInit {
         const status = this.gameStatus;
         if (this.matrix.checkWinningCombination(m.player)) {
 
-          const winningMovements = this.matrix.getWinningCombination(m.player);
-          this.matrix.flattenedValues.forEach(x =>
-            winningMovements.some(y => y === x.id) ? (x.style += ' blink') : null
-          );
-
+          this.matrix.blink(m.player);
           return m.player === this.player1 ? status.PlayerWon : status.PlayerLost;
+
         } else {
           const movementsX = this.matrix.movements.x.length;
           const movementsO = this.matrix.movements.o.length;
           const movementLimit = Math.floor(this.matrix.size / 2);
 
           if (movementsX >= movementLimit || movementsO >= movementLimit) {
-            this.matrix.flattenedValues.forEach(x => x.style += ' blink');
+            this.matrix.blink();
             return status.Draw;
           }
         }
@@ -86,8 +85,8 @@ export class TicTacToeComponent implements OnInit {
 
   // This is a logic to make PC not so dumb when playing.
   private pcMove() {
-    const cellsLeft = this.matrix.flattenedValues
-      .map(x => x.value ? null : x.id)
+    const cellsLeft = this.matrix.flat
+      .map(c => c.value ? null : c.id)
       .filter(_.identity);
 
     const amountLeft = cellsLeft.length;
@@ -102,25 +101,25 @@ export class TicTacToeComponent implements OnInit {
       if (!centerValue) {
         nextMove = this.matrix.values[centerIndex][centerIndex].id;
       } else {
-        const o = this.matrix.movements.o;
+        const pc = this.matrix.movements[this.player2];
 
-        if (o.length) {
-          const x = this.matrix.movements.x;
+        if (pc.length) {
+          const player = this.matrix.movements[this.player1];
 
-          const differencesX = this.matrix.winningCombinations.map(c =>
-            _.difference(c, x)
+          const differencesPlayer = this.matrix.winningCombinations.map(c =>
+            _.difference(c, player)
           );
-          const minX = [...differencesX].sort((a, b) => a.length - b.length);
+          const minPlayer = [...differencesPlayer].sort((a, b) => a.length - b.length);
           const hinderPlayer = _.uniq(
-            _.flatMap(minX.map(y => _.intersection(y, cellsLeft)))
+            _.flatMap(minPlayer.map(y => _.intersection(y, cellsLeft)))
           );
 
-          const differencesO = this.matrix.winningCombinations.map((c) =>
-            _.difference(c, o)
+          const differencesPc = this.matrix.winningCombinations.map((c) =>
+            _.difference(c, pc)
           );
-          const minO = [...differencesO].sort((a, b) => a.length - b.length);
+          const minPc = [...differencesPc].sort((a, b) => a.length - b.length);
           const seekVictory = _.uniq(
-            _.flatMap(minO.map(y => _.intersection(y, cellsLeft)))
+            _.flatMap(minPc.map(y => _.intersection(y, cellsLeft)))
           );
 
           const common = _.intersection(hinderPlayer, seekVictory);
@@ -152,8 +151,8 @@ export class TicTacToeComponent implements OnInit {
           }
 
           this.service.getGameState(x.id).pipe(
-            tap(y => {
-              this.matrix.updateGameState(y.data);
+            tap(state => {
+              this.matrix.updateGameState(state.data);
               this.cdr.detectChanges();
             })
           ).subscribe();

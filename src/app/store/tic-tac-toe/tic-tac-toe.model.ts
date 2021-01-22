@@ -60,7 +60,7 @@ export class Matrix {
   readonly size: number;
   readonly indexes: number[];
   readonly values: TicTacToeCell[][];
-  readonly flattenedValues: TicTacToeCell[];
+  readonly flat: TicTacToeCell[];
   readonly winningCombinations: number[][];
   readonly resetTrigger$ = new Subject<GameStatus>();
 
@@ -73,7 +73,7 @@ export class Matrix {
       this.movements = new PlayersMovements();
 
       const blink = ' blink';
-      this.flattenedValues.forEach(c => {
+      this.flat.forEach(c => {
         c.value = null;
         if (c.style.includes(blink)) {
           c.style = _.head(c.style.split(blink)) as Border;
@@ -86,8 +86,8 @@ export class Matrix {
     this.n = n;
     this.size = this.n ** 2 + 1;
     this.indexes = _.range(1, this.size);
-    this.flattenedValues = this.indexes.map(id => new TicTacToeCell(id, this.n));
-    this.values = _.chunk(this.flattenedValues, this.n);
+    this.flat = this.indexes.map(id => new TicTacToeCell(id, this.n));
+    this.values = _.chunk(this.flat, this.n);
 
     this.winningCombinations = [
       // Each line
@@ -105,11 +105,26 @@ export class Matrix {
       filter(x => !!x),
       tap(p => {
         this.movements[p.player].push(p.id);
-        this.flattenedValues.find(x => x.id === p.id).value = p.player;
+        this.flat.find(x => x.id === p.id).value = p.player;
       }),
       shareReplay(1)
     );
 
+  }
+
+  /** Make winning cells blink.
+   * This is a impure function, call it just once
+   */
+  blink(player?: Player) {
+    const blink = ' blink';
+    if (player) {
+      const winningCombination = this.getWinningCombination(player);
+      this.flat.forEach(x =>
+        winningCombination.some(y => y === x.id) ? (x.style += blink) : null
+      );
+    } else {
+      this.flat.forEach(x => x.style += blink);
+    }
   }
 
   checkWinningCombination(player: Player, extra?: number) {
@@ -124,7 +139,7 @@ export class Matrix {
   updateGameState(movements: PlayersMovements) {
     _.forEach(movements, (m, k) =>
       m.forEach(p =>
-        this.flattenedValues.forEach(v => {
+        this.flat.forEach(v => {
           if (v.id === p) {
             v.value = k as Player;
           }
