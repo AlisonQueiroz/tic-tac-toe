@@ -17,15 +17,19 @@ import { LoginComponent } from './components/login/login.component';
 import { NgxAuthFirebaseUIModule } from 'ngx-auth-firebaseui';
 import { environment } from 'src/environments/environment';
 import { LayoutModule } from '@angular/cdk/layout';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatDialogModule } from '@angular/material/dialog';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
+import { CopyMatchIdDialogComponent } from './components/copy-match-id-dialog/copy-match-id-dialog.component';
 
 const material = [
   MatIconModule,
   MatListModule,
+  MatDialogModule,
   MatInputModule,
   MatButtonModule,
   MatButtonModule,
@@ -43,7 +47,8 @@ const material = [
     HomeComponent,
     OnlineMatchSettingsComponent,
     LoginComponent,
-    ToolbarComponent
+    ToolbarComponent,
+    CopyMatchIdDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -51,6 +56,8 @@ const material = [
     BrowserAnimationsModule,
     ReactiveFormsModule,
     ...material,
+    LayoutModule,
+    ClipboardModule,
     NgxAuthFirebaseUIModule
       .forRoot(
         environment.firebase,
@@ -58,8 +65,7 @@ const material = [
           authGuardFallbackURL: 'login',
           authGuardLoggedInURL: '',
         }
-      ),
-    LayoutModule
+      )
   ],
   exports: [
     NgLetDirective,

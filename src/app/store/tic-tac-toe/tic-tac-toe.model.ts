@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
 import { filter, shareReplay, tap } from 'rxjs/operators';
+import { BasicEntity } from 'src/app/shared/models/DatabaseEntity';
 
 export enum GameStatus {
   PlayerWon = 1,
@@ -63,6 +64,7 @@ export class Matrix {
   readonly flat: TicTacToeCell[];
   readonly winningCombinations: number[][];
   readonly resetTrigger$ = new Subject<GameStatus>();
+  public gameState: GameState;
 
   public movements = new PlayersMovements();
   readonly movement$: Observable<Movement>;
@@ -120,7 +122,7 @@ export class Matrix {
     if (player) {
       const winningCombination = this.getWinningCombination(player);
       this.flat.forEach(x =>
-        winningCombination.some(y => y === x.id) ? (x.style += blink) : null
+        winningCombination.some(y => y === x.id) && (x.style += blink)
       );
     } else {
       this.flat.forEach(x => x.style += blink);
@@ -136,7 +138,38 @@ export class Matrix {
     return this.winningCombinations.find(x => !_.difference(x, this.movements[player]).length);
   }
 
-  updateGameState(movements: PlayersMovements) {
+  updateGameState(gameState: GameState) {
+    this.gameState = gameState;
+    const movements = {
+      o: gameState.o,
+      x: gameState.x
+    } as PlayersMovements;
+
+    if (this.movements.o.length) {
+      const oMovement = _.difference(
+        movements.o, this.movements.o
+      );
+
+      if (oMovement.length) {
+        this.movementTrigger$.next({
+          id: _.head(oMovement),
+          player: 'o'
+        } as Movement);
+      }
+    }
+    if (this.movements.x.length) {
+      const xMovement = _.difference(
+        movements.x, this.movements.x
+      );
+
+      if (xMovement.length) {
+        this.movementTrigger$.next({
+          id: _.head(xMovement),
+          player: 'x'
+        } as Movement);
+      }
+    }
+
     _.forEach(movements, (m, k) =>
       m.forEach(p =>
         this.flat.forEach(v => {
@@ -147,6 +180,12 @@ export class Matrix {
       )
     );
     this.movements = movements;
+  }
+
+  gameStateReseted() {
+    this.gameState.o = [];
+    this.gameState.x = [];
+    return this.gameState;
   }
 }
 
@@ -166,4 +205,37 @@ export type Player = 'x' | 'o';
 export class PlayersMovements {
   x: number[] = [];
   o: number[] = [];
+}
+
+export class GameState implements BasicEntity, PlayersMovements {
+  id: string;
+  x: number[];
+  o: number[];
+  turnPlayerId: string;
+  playersId: { [key in Player]?: string };
+  constructor(playerId: string, player: Player = 'x') {
+    this.id = null;
+    this.x = [];
+    this.o = [];
+    this.playersId = {
+      [player]: playerId,
+      [getPlayer2(player)]: null
+    },
+    this.turnPlayerId = playerId;
+  }
+}
+
+export function getPlayer2(player: Player) {
+  return player === 'x' ? 'o' : 'x' as Player;
+}
+
+export function getMyPlayer(
+  userId: string,
+  playersId: { [key in Player]?: string }
+): Player {
+  return playersId.x && userId === playersId.x
+    ? 'x'
+    : playersId.o && userId === playersId.o
+      ? 'o'
+      : playersId.x ? 'o' : 'x';
 }

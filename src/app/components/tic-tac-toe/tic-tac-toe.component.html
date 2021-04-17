@@ -8,7 +8,8 @@
         [ngClass]="cell.style"
         (click)="
           !cell?.value &&
-            matrix.movementTrigger$.next({ id: cell.id, player: player1 })
+            matrix.movementTrigger$.next({ id: cell.id, player: player1 }) &&
+            opponentTurn$.next(true)
         "
         [disabled]="gameOver || (opponentTurn$ | async)"
       >

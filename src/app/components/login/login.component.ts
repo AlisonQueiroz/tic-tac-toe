@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { AuthProvider, Theme } from 'ngx-auth-firebaseui';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'app-login',
@@ -7,12 +6,5 @@ import { AuthProvider, Theme } from 'ngx-auth-firebaseui';
   styleUrls: ['./login.component.sass'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent implements OnInit {
-  themes = Theme;
-
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
+export class LoginComponent {
 }

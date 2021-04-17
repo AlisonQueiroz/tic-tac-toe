@@ -1,5 +1,9 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgxAuthFirebaseuiAvatarComponent } from 'ngx-auth-firebaseui';
+import { forkJoin } from 'rxjs';
+import { tap, filter } from 'rxjs/operators';
+import { TicTacToeService } from 'src/app/store/tic-tac-toe/tic-tac-toe.index';
 
 interface MenuOption {
   link: string;
@@ -22,9 +26,32 @@ export class ToolbarComponent implements AfterViewInit {
     { link: '/online', icon: 'device_hub', title: 'Play Online' },
   ];
 
-  constructor(public cdr: ChangeDetectorRef) {}
+  constructor(
+    public cdr: ChangeDetectorRef,
+    public service: TicTacToeService,
+    public router: Router
+  ) {}
 
   ngAfterViewInit() {
-    this.ngxAuth.user$.subscribe(x => this.cdr.detectChanges());
+    const userLogEvent = this.ngxAuth.user$;
+
+    const login = userLogEvent.pipe(
+      filter(user => !!user?.uid),
+      tap(() => this.router.navigate(['./online']))
+    );
+
+    const logout = userLogEvent.pipe(
+      filter(user => !user?.uid),
+      tap(() => this.router.navigate(['./login']))
+    );
+
+    const updateUser = userLogEvent.pipe(
+      tap(user => {
+        this.service.userId$.next(user?.uid);
+        this.cdr.detectChanges();
+      })
+    );
+
+    forkJoin([updateUser, login, logout]).subscribe();
   }
 }

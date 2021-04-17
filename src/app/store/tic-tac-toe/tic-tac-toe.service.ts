@@ -1,16 +1,9 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { from } from 'rxjs';
+import * as _ from 'lodash';
+import { BehaviorSubject, from } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { PlayersMovements } from './tic-tac-toe.model';
-
-interface BasicEntity {
-  id: string;
-}
-
-export interface GameState extends BasicEntity {
-  data: PlayersMovements;
-}
+import { GameState, getMyPlayer } from './tic-tac-toe.model';
 
 @Injectable({
   providedIn: 'root',
@@ -18,14 +11,16 @@ export interface GameState extends BasicEntity {
 export class TicTacToeService {
   constructor(private firestore: AngularFirestore) {}
 
-  newGame(movement: PlayersMovements = new PlayersMovements()) {
+  readonly userId$ = new BehaviorSubject<string>(null);
+
+  newGame(gameState: GameState = new GameState(this.userId$.value)) {
     return from(
-      this.firestore.collection('Game State').add({ ...movement })
+      this.firestore.collection('Game State').add({ ...gameState })
     ).pipe(
-      map(x => ({
-        id: x.id,
-        data: movement
-      } as GameState))
+      map(x => {
+        gameState.id = x.id;
+        return gameState;
+      })
     );
   }
 
@@ -35,18 +30,25 @@ export class TicTacToeService {
       .doc(id)
       .snapshotChanges()
       .pipe(
-        map(x => ({
-          id: x.payload.id,
-          data: x.payload.data(),
-        } as GameState))
+        map(x => {
+          const data = x.payload.data() as GameState;
+          const state = ({
+            ...data,
+            id: data ? x.payload.id : null,
+          } as GameState);
+
+          const userId = this.userId$.value;
+          if (!_.some(state.playersId, pId => pId === userId)) {
+            state.playersId[getMyPlayer(userId, state.playersId)] = userId;
+            this.updateGameState(id, state);
+          }
+
+          return state;
+        }),
       );
   }
 
-  updateGameState(id: string, movement: PlayersMovements) {
-    this.firestore.doc('Game State/' + id).update({ ...movement });
+  updateGameState(id: string, gameState: GameState) {
+    this.firestore.doc('Game State/' + id).update({ ...gameState });
   }
-
-  // delete_Icecream(record_id) {
-  //   this.firestore.doc('Game State/' + record_id).delete();
-  // }
 }

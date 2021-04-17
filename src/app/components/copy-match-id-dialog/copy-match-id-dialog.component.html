@@ -1,0 +1,13 @@
+<h2 mat-dialog-title>Share the match id with your friend</h2>
+<mat-dialog-content style="display: flex; flex-direction: row;">
+  <p style="padding-top: 11px">{{ data.matchId }}</p>
+  <button mat-icon-button [cdkCopyToClipboard]="data.matchId">  
+    <mat-icon>content_copy</mat-icon>
+  </button>
+</mat-dialog-content>
+
+<div style="text-align: -webkit-center;">
+  <mat-spinner diameter="40"></mat-spinner>
+  <span>Waiting for another player to join the game...</span>
+</div>
+

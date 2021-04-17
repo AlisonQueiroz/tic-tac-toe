@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -20,8 +21,13 @@ export class OnlineMatchSettingsComponent {
     public service: TicTacToeService,
     public fb: FormBuilder,
     private router: Router,
-    public route: ActivatedRoute
-  ) {}
+    public route: ActivatedRoute,
+    public dialog: MatDialog
+  ) {
+    if (!this.service.userId$.value) {
+      this.router.navigate(['./login']);
+    }
+  }
 
   getGameState() {
     this.loading$.next(true);
@@ -30,9 +36,9 @@ export class OnlineMatchSettingsComponent {
       .getGameState(this.matchCode.value).pipe(
         tap(x => {
           this.loading$.next(false);
-          !x.data
-            ? this.matchCode.setErrors({ invalid: 'Invalid match code' })
-            : this.redirectToMatch(x);
+          x.id
+            ? this.redirectToMatch(x)
+            : this.matchCode.setErrors({ invalid: 'Invalid match code' });
         })
       ).subscribe();
   }
@@ -40,14 +46,17 @@ export class OnlineMatchSettingsComponent {
   createNewMatch() {
     this.loading$.next(true);
 
-    this.service.newGame().pipe(
-      tap(x => this.redirectToMatch(x))
+    const userId = this.service.userId$.value;
+    const gameState = new GameState(userId, this.player);
+
+    this.service.newGame(gameState).pipe(
+      tap(x => this.redirectToMatch(x, true))
     ).subscribe();
   }
 
-  redirectToMatch(x: GameState) {
-    return this.router.navigate(['../play', x.id], {
-      state: { player: this.player, movements: x.data },
+  redirectToMatch(gameState: GameState, openDialog = false) {
+    return this.router.navigate(['../play', gameState.id], {
+      state: { player: this.player, gameState, openDialog },
       relativeTo: this.route,
     });
   }

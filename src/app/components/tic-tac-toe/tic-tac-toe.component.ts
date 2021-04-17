@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { gameOverInfos, GameStatus, Matrix, Player, TicTacToeService } from '../../store/tic-tac-toe/tic-tac-toe.index';
+import { gameOverInfos, GameState, GameStatus, getMyPlayer, getPlayer2, Matrix, Player, TicTacToeService } from '../../store/tic-tac-toe/tic-tac-toe.index';
 
 import * as _ from 'lodash';
-import { merge, Observable } from 'rxjs';
-import { map, filter, skipWhile, tap, takeUntil, shareReplay, debounceTime } from 'rxjs/operators';
+import { merge, Observable, Subject } from 'rxjs';
+import { map, filter, skipWhile, tap, takeUntil, debounceTime, take, shareReplay } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
+import { CopyMatchIdDialogComponent, DialogData } from '../copy-match-id-dialog/copy-match-id-dialog.component';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-tic-tac-toe',
@@ -17,16 +19,25 @@ export class TicTacToeComponent implements OnInit {
   private readonly n = 3;
   private readonly gameStatus = GameStatus;
   readonly gameOverInfos = gameOverInfos;
-  readonly player1: Player = history.state.player || 'x';
-  readonly player2: Player = this.player1 === 'x' ? 'o' : 'x';
+  public player1: Player = history.state.player || 'x';
+  public player2: Player = getPlayer2(this.player1);
 
   public matchId: string;
 
   readonly matrix = new Matrix(this.n);
 
   readonly reset$ = this.matrix.reset$.pipe(
-    tap(() => this.pcPlayerMovements$.subscribe())
-  ) as Observable<null>;
+    tap(() => {
+      if (!this.matchId) {
+        this.pcPlayerMovements$.subscribe();
+      } else {
+        this.service.updateGameState(
+          this.matchId,
+          this.matrix.gameStateReseted()
+        );
+      }
+    })
+  ) as Observable<void>;
 
   /**
    * Everytime a player moves, it should check (after this.n movements) if there's a winner
@@ -61,10 +72,7 @@ export class TicTacToeComponent implements OnInit {
     )
   );
 
-  readonly opponentTurn$ = this.matrix.movement$.pipe(
-    map(p => p.player === this.player1),
-    shareReplay(1)
-  );
+  readonly opponentTurn$ = new Subject<boolean>();
 
   readonly pcPlayerMovements$ = this.opponentTurn$.pipe(
     takeUntil(this.gameOver$),
@@ -74,13 +82,18 @@ export class TicTacToeComponent implements OnInit {
   );
 
   readonly movements$ = this.matrix.movement$.pipe(
-    tap(() => this.service.updateGameState(this.matchId, this.matrix.movements))
+    filter(p => p.player === this.player1),
+    tap(p => {
+      this.matrix.gameState.turnPlayerId = this.matrix.gameState.playersId[p.player];
+      this.service.updateGameState(this.matchId, this.matrix.gameState);
+    })
   );
 
   constructor(
     private route: ActivatedRoute,
     public service: TicTacToeService,
-    public cdr: ChangeDetectorRef
+    public cdr: ChangeDetectorRef,
+    public dialog: MatDialog
   ) {}
 
   // This is a logic to make PC not so dumb when playing.
@@ -137,6 +150,7 @@ export class TicTacToeComponent implements OnInit {
         }
       }
       this.matrix.movementTrigger$.next({ id: nextMove, player: this.player2 });
+      this.opponentTurn$.next(false);
     }
   }
 
@@ -146,13 +160,38 @@ export class TicTacToeComponent implements OnInit {
         if (x?.id) {
           this.movements$.subscribe();
           this.matchId = x.id;
-          if (history.state.movements) {
-            this.matrix.updateGameState(history.state.movements);
+          const gameState = history.state.gameState as GameState;
+
+          this.matrix.updateGameState(gameState);
+          this.player1 = getMyPlayer(
+            this.service.userId$.value,
+            gameState.playersId
+          );
+
+          let dialogRef: MatDialogRef<CopyMatchIdDialogComponent, any>;
+          if (history.state.openDialog) {
+            dialogRef = this.dialog.open(CopyMatchIdDialogComponent, {
+              width: '500px',
+              height: '240px',
+              data: { matchId: x.id } as DialogData
+            });
           }
 
-          this.service.getGameState(x.id).pipe(
+          const getGameState = this.service.getGameState(x.id).pipe(shareReplay(1));
+          if (dialogRef) {
+            getGameState.pipe(
+              filter(y => !!y.playersId[this.player2]),
+              take(1),
+              tap(() => dialogRef.close())
+            ).subscribe();
+          }
+
+          getGameState.pipe(
             tap(state => {
-              this.matrix.updateGameState(state.data);
+              this.matrix.updateGameState(state);
+              this.opponentTurn$.next(
+                this.service.userId$.value === state.turnPlayerId
+              );
               this.cdr.detectChanges();
             })
           ).subscribe();
