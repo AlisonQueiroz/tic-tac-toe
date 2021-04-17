@@ -202,4 +202,9 @@ export class TicTacToeComponent implements OnInit {
       }
     )).subscribe();
   }
+
+  move(cellId: number) {
+    this.matrix.movementTrigger$.next({ id: cellId, player: this.player1 });
+    this.opponentTurn$.next(true);
+  }
 }

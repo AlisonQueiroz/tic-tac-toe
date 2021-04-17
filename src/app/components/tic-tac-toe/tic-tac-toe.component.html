@@ -6,10 +6,7 @@
         class="cell"
         *ngFor="let cell of line"
         [ngClass]="cell.style"
-        (click)="
-          !cell?.value && matrix.movementTrigger$.next({ id: cell.id, player: player1 });
-          !cell?.value && opponentTurn$.next(true);
-        "
+        (click)="!cell?.value && move(cell.id)"
         [disabled]="gameOver || (opponentTurn$ | async)"
       >
         {{ cell?.value }}
