@@ -18,8 +18,8 @@ export class HomeComponent {
     public dialog: MatDialog
   ) {}
 
-  play(options?: { online: boolean }) {
-    this.router.navigate([options?.online ? 'online' : 'play'], {
+  play(opt: { route: string }) {
+    this.router.navigate([opt.route], {
       state: { player: this.player.value },
     });
   }

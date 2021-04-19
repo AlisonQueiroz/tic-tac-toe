@@ -23,11 +23,7 @@ export class OnlineMatchSettingsComponent {
     private router: Router,
     public route: ActivatedRoute,
     public dialog: MatDialog
-  ) {
-    if (!this.service.userId$.value) {
-      this.router.navigate(['./login']);
-    }
-  }
+  ) { }
 
   getGameState() {
     this.loading$.next(true);
@@ -36,7 +32,7 @@ export class OnlineMatchSettingsComponent {
       .getGameState(this.matchCode.value).pipe(
         tap(x => {
           this.loading$.next(false);
-          x.id
+          x?.id
             ? this.redirectToMatch(x)
             : this.matchCode.setErrors({ invalid: 'Invalid match code' });
         })

@@ -33,9 +33,9 @@
   "
 >
   <p>Do you want to play</p>
-  <button mat-stroked-button style="margin: 10px" (click)="play({ online: true })">
+  <button mat-stroked-button style="margin: 10px" (click)="play({ route: 'online' })">
     Online with a friend
   </button>
 
-  <button mat-stroked-button (click)="play()">Offline</button>
+  <button mat-stroked-button (click)="play({ route: 'play' })">Offline</button>
 </div>

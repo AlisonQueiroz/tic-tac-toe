@@ -160,13 +160,6 @@ export class TicTacToeComponent implements OnInit {
         if (x?.id) {
           this.movements$.subscribe();
           this.matchId = x.id;
-          const gameState = history.state.gameState as GameState;
-
-          this.matrix.updateGameState(gameState);
-          this.player1 = getMyPlayer(
-            this.service.userId$.value,
-            gameState.playersId
-          );
 
           let dialogRef: MatDialogRef<CopyMatchIdDialogComponent, any>;
           if (history.state.openDialog) {
@@ -178,6 +171,18 @@ export class TicTacToeComponent implements OnInit {
           }
 
           const getGameState = this.service.getGameState(x.id).pipe(shareReplay(1));
+
+          getGameState.pipe(
+            take(1),
+            tap(gameState => {
+              this.matrix.updateGameState(gameState);
+              this.player1 = getMyPlayer(
+                this.service.userId$.value,
+                gameState.playersId
+              );
+            })
+          ).subscribe();
+
           if (dialogRef) {
             getGameState.pipe(
               filter(y => !!y.playersId[this.player2]),

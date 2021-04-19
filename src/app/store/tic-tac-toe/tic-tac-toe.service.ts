@@ -38,9 +38,13 @@ export class TicTacToeService {
           } as GameState);
 
           const userId = this.userId$.value;
-          if (!_.some(state.playersId, pId => pId === userId)) {
+          const thereIsRoom = _.some(state.playersId, pId => !pId);
+          const playerIsNotInMatch = !_.some(state.playersId, pId => pId === userId);
+          if (thereIsRoom && playerIsNotInMatch) {
             state.playersId[getMyPlayer(userId, state.playersId)] = userId;
             this.updateGameState(id, state);
+          } else if (!thereIsRoom && playerIsNotInMatch) {
+            return null;
           }
 
           return state;

@@ -9,13 +9,15 @@ import { HomeComponent } from './components/home/home.component';
 import { TicTacToeComponent } from './components/tic-tac-toe/tic-tac-toe.component';
 import { OnlineMatchSettingsComponent } from './components/online-match-settings/online-match-settings.component';
 import { LoginComponent } from './components/login/login.component';
+import { LoggedInGuard } from 'ngx-auth-firebaseui';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   {
     path: 'online',
-    component: OnlineMatchSettingsComponent
+    component: OnlineMatchSettingsComponent,
+    canActivate: [LoggedInGuard]
   },
   {
     path: 'play',
@@ -38,7 +40,7 @@ const routes: Routes = [
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' }),
+    RouterModule.forRoot(routes, { relativeLinkResolution: 'corrected' }),
     AngularFireModule.initializeApp(environment.firebase),
     AngularFirestoreModule,
     AngularFireDatabaseModule,

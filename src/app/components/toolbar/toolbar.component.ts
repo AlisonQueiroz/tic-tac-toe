@@ -1,4 +1,10 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ViewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { NgxAuthFirebaseuiAvatarComponent } from 'ngx-auth-firebaseui';
 import { forkJoin } from 'rxjs';
@@ -18,35 +24,45 @@ interface MenuOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToolbarComponent implements AfterViewInit {
-  @ViewChild(NgxAuthFirebaseuiAvatarComponent) ngxAuth: NgxAuthFirebaseuiAvatarComponent;
+  @ViewChild(NgxAuthFirebaseuiAvatarComponent)
+  ngxAuth: NgxAuthFirebaseuiAvatarComponent;
 
   readonly menuOptions: MenuOption[] = [
     { link: '/', icon: 'home', title: 'Home' },
-    { link: '/play', icon: 'videogame_asset', title: 'Play Offline' },
     { link: '/online', icon: 'device_hub', title: 'Play Online' },
+    { link: '/play', icon: 'videogame_asset', title: 'Play Offline' },
   ];
 
   constructor(
+    public router: Router,
     public cdr: ChangeDetectorRef,
-    public service: TicTacToeService,
-    public router: Router
+    public service: TicTacToeService
   ) {}
 
   ngAfterViewInit() {
     const userLogEvent = this.ngxAuth.user$;
 
     const login = userLogEvent.pipe(
-      filter(user => !!user?.uid),
-      tap(() => this.router.navigate(['./online']))
+      filter((user) => !!user?.uid),
+      tap(
+        () =>
+          this.router.url.includes('/login?redirectUrl=%2Fonline') &&
+          this.router.navigate(['./online'])
+      )
     );
 
     const logout = userLogEvent.pipe(
-      filter(user => !user?.uid),
-      tap(() => this.router.navigate(['./login']))
+      filter((user) => !user?.uid),
+      tap(
+        () =>
+          (this.router.url.includes('/online') ||
+            this.router.url.includes('/play/')) &&
+          this.router.navigate(['./login'])
+      )
     );
 
     const updateUser = userLogEvent.pipe(
-      tap(user => {
+      tap((user) => {
         this.service.userId$.next(user?.uid);
         this.cdr.detectChanges();
       })

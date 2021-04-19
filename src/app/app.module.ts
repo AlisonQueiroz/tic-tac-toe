@@ -61,10 +61,8 @@ const material = [
     NgxAuthFirebaseUIModule
       .forRoot(
         environment.firebase,
-        () => 'expandabletictactoe', {
-          authGuardFallbackURL: 'login',
-          authGuardLoggedInURL: '',
-        }
+        () => 'expandabletictactoe',
+        { authGuardFallbackURL: 'login' }
       )
   ],
   exports: [
