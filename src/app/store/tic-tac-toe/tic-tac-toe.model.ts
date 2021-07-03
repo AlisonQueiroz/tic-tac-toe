@@ -189,16 +189,10 @@ export class Matrix {
   }
 }
 
-export type Border =
-  | ''
-  | 'top'
-  | 'right'
-  | 'bottom'
-  | 'left'
-  | 'top right'
-  | 'top left'
-  | 'bottom right'
-  | 'bottom left';
+export type Vertical = 'top' | 'bottom';
+export type Horizontal = 'left' | 'right';
+export type VerticalHorizontal = `${Vertical} ${Horizontal}`;
+export type Border = '' | Vertical | Horizontal | VerticalHorizontal;
 
 export type Player = 'x' | 'o';
 
