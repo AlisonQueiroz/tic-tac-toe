@@ -191,8 +191,7 @@ export class Matrix {
 
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right';
-export type VerticalHorizontal = `${Vertical} ${Horizontal}`;
-export type Border = '' | Vertical | Horizontal | VerticalHorizontal;
+export type Border = '' | Vertical | Horizontal | `${Vertical} ${Horizontal}`;
 
 export type Player = 'x' | 'o';
 
